@@ -1,6 +1,6 @@
 {
   "name": "socket-chat-example",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "My first socket.io app",
   "license": "MIT",
   "dependencies": {
@@ -8,6 +8,17 @@
     "socket.io": "^2.3.0"
   },
   "scripts": {
-    "start": "node index.js"
-  }
+    "start": "node server",
+    "build": "cd client/ && yarn install && yarn build"
+  },
+  "cacheDirectories": [
+      "node_modules",
+      "client/node_modules"
+  ],
+  "keywords": [
+      "node",
+      "react",
+      "heroku",
+      "socket.io"
+  ]
 }
