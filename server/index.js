@@ -22,15 +22,6 @@ io.on('connection', function (socket) {
     socket.username = "Guest#"+iUserCount++;
     console.log("socket connected: id=", socket.id, socket.username);
 
-    // all clients join general chat
-    socket.join('general', () => {
-        io.to('general').emit('chat message', {
-            sender: 'Server',
-            room: 'general',
-            msg: socket.username+' has joined'
-        });
-    });
-
     // when any socket sends the server a chat message, broadcast to all clients that same message
     socket.on('chat message', function (e) {
         io.to(e.room).emit('chat message', {
@@ -40,14 +31,25 @@ io.on('connection', function (socket) {
         });
     });
 
-    socket.on('set name', (username) => {
+    socket.on('setuser', (username) => {
+        console.log("name change: ", socket.username, username);
         // save the user name
         socket.username = username;
 
+        // all clients join general chat
+        socket.join('general', () => {
+            io.to('general').emit('chat message', {
+                sender: 'Server',
+                room: 'general',
+                msg: socket.username+' has joined'
+            });
+        });
+
         // broadcast to other clients the new user info
-        socket.broadcast.emit('user joined', {
+        socket.broadcast.emit('status', {
             id: socket.id,
             username: socket.username,
+            status: 'online'
         });
 
     });

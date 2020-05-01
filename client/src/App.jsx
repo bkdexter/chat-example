@@ -1,10 +1,44 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import api from './api';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import useSocket from './useSocket';
 import './App.css';
+
+const UsernameRequest = (props) => {
+    const [text, setText] = useState('');
+
+    const textChangeHandler = (event) => {
+        setText(event.target.value);
+    }
+
+    const keyHandler = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            props.onAction(text);
+        }
+    }
+
+    return (
+        <div className="usernameIn input_bar">
+            <input
+                className="lineIn"
+                autocomplete="off"
+                placeholder={props.placeHolder}
+                value={text}
+                onChange={textChangeHandler}
+                onKeyPress={keyHandler}
+            />
+            <button className="send" onClick={props.onAction}>{props.actContent}</button>
+        </div>
+    );
+}
 
 const ChatBar = (props) => {
 
     const [text, setText] = useState('');
+    const inRef = useRef();
+
+    useEffect(() => {
+        inRef.current.focus();
+    }, [inRef]);
 
     const sendMessage = () => {
         // call onSend with message text
@@ -28,9 +62,10 @@ const ChatBar = (props) => {
     }
 
     return (
-        <div className="bottom_bar">
+        <div className="bottom_bar input_bar">
             <input
-                className="chatIn"
+                ref={inRef}
+                className="lineIn"
                 autocomplete="off"
                 placeholder="Message #general"
                 value={text}
@@ -62,33 +97,34 @@ const MessageList = (props) => {
 }
 
 const App = (_props) => {
-    const [messages, setMessages] = useState([
-        {
-            room: "Server",
-            sender: "Admin",
-            msg: "Welcome to the Converstation..."
-        }
-    ]);
+    const client = useSocket();
 
-    useEffect(() => {
-        api.on('chat message', (e) => {
-            setMessages((prev) => {
-                return [...prev, e];
-            })
-            //window.scrollTo(0, document.body.scrollHeight);
-        });
-    }, []);
+    const [username, setUsername] = useState(undefined);
 
     const sendMessage = (text) => {
-        api.emit('chat message', {
-            room: 'general',
-            msg: text
-        });
+        client.sendMessage(text, {room: 'general'});
+    }
+
+    const specifyUsername = (text) => {
+        setUsername(text);
+        client.setUsername(text);
+    }
+
+    if (!username) {
+        return (
+            <div>
+                <UsernameRequest
+                placeHolder="Enter a username"
+                 actContent="Go!"
+                 onAction={specifyUsername}
+                 />
+            </div>
+        )
     }
 
     return (
         <div>
-            <MessageList messages={messages} />
+            <MessageList messages={client.messages} />
             <ChatBar onSend={sendMessage} />
         </div>
     );
